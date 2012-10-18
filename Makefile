@@ -14,20 +14,20 @@ html: ${HTML}
 
 tex: ${TEX}
 
-${MAN}:build/%.man:%.rst | builddir
+${MAN}:build/%.man:%.rst
 	@echo + MAN $<
+	@mkdir -p $(dir $@)
 	${V}rst2man ${ARGS} $< $@
 
-${HTML}:build/%.html:%.rst | builddir
+${HTML}:build/%.html:%.rst
 	@echo + HTML $<
+	@mkdir -p $(dir $@)
 	${V}rst2html ${ARGS} $< $@
 
-${TEX}:build/%.tex:%.rst | builddir
+${TEX}:build/%.tex:%.rst
 	@echo + TEX $<
+	@mkdir -p $(dir $@)
 	${V}rst2latex ${ARGS} $< $@
-
-builddir:
-	@mkdir -p build
 
 clean:
 	${V}rm -rf build
