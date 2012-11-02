@@ -61,7 +61,26 @@ A *MemoryObject* maintains information about a memory block including its addres
 
 *ObjectState* or OS
 -------------------
-An *ObjectState* maintains the content of a *MemoryObject*. The content of it can be either symbolic or concrete. How OSes are binded with MOs is maintained by the *addressSpace* in *ExecutionState*.
+An *ObjectState* maintains the content of a *MemoryObject*. The content of it can be either symbolic or concrete. How OSes are binded with MOs is maintained by the *addressSpace* in *ExecutionState*. Each OS contains an update list recording the updates to this memory block.
+
+States of Each Byte In OS
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In each OS, there is a bitarray called *concreteMask* for tracking whether each byte is concrete or symbolic.
+
+**TODO** What does 'flushed' mean?
+
+Reading from OS
+~~~~~~~~~~~~~~~
+
+Assume the offset is concrete. For concrete bytes, the value is stored in *concreteStore* which will be wrapped with a *ConstantExpr*. For symbolic bytes, the expression is stored in *knownSymbolics*. If the byte is marked symbolic but the value of it is not known yet (i.e. the expression stored is NULL), a *readExpr* is generated.
+
+Writing to OS
+~~~~~~~~~~~~~
+
+If the offset and the value is both concrete, update the corresponding cell in *concreteStore*, erase the previous symbolic record of the byte and mark it as concrete and unflushed.
+
+If the offset is concrete but the value is symbolic, update the corresponding cell in *knownSymbolics* and mark the byte as symbolic and unflushed.
 
 *MemoryManager*
 ---------------
