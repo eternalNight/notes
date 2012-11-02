@@ -49,12 +49,13 @@ Running
 Replay Mode
 -----------
 
-If --replay-out-dir or --replay-out is given, klee will run the bitcode in replay mode. Ignored.
+If --replay-out-dir or --replay-out is given, klee will run the bitcode in replay mode which executes the binary with the concrete values given (functionally equals to build the binary with a SO linked and run it with a special environment variable). Ignored.
 
 Normal Mode
 -----------
 
 1. Prepare for seeds if --seed-out or --send-out-dir is not empty. (TODO: what's this?)
+    The seeds are ktest files which include concrete values which can cover some of the path. Klee will only generate test files which cover the rest of the path if these ktest files are given.
 2. Run the main functions with the arguments prepared by calling *runFunctionAsMain*.
 
 Cleanup and print statistics
