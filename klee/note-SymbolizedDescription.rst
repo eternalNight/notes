@@ -9,6 +9,29 @@ A Symbolized Description of Execution Process in Klee
 Symbols
 =======
 
+Expressions
+-----------
+
+The grammar of expressions for normal use is listed below.
+
+.. math::
+    \begin{matrix}
+    expr & ::= & const | nonconst \\
+    const & ::= & APINT \\
+    nonconst & ::= & binop(expr, expr) \\
+    & & unop(expr) \\
+    & & extop(expr, WIDTH) \\
+    & & READ(expr, UPDATELIST) \\
+    & & SELECT(expr, expr, expr) \\
+    & & CONCAT(expr, expr) \\
+    & & EXTRACT(expr, OFFSET, WIDTH) \\
+    binop & ::= & ADD | SUB | MUL | UDIV | SDIV | UREM | SREM | AND | OR | XOR | SHL | LSHR | ASHR \\
+    unop & ::= & NOT \\
+    compop & ::= & EQ | NE | ULT | ULE | UGT | UGE | SLT | SLE | SGT | SGE \\
+    extop & ::= & SEXT | ZEXT
+    \end{matrix}
+
+
 Static Program
 --------------
 The program is represented as a map from address to instructions, i.e.
