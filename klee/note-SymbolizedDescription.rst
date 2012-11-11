@@ -50,12 +50,12 @@ The memory state is defined as
 where :math:`m` is a *MemoryObject* and :math:`o` is an *ObjectState*. They are defined as follows.
 
 .. math::
-    m ::= \langle base, size \rangle
+    m ::= \langle BASE, SIZE \rangle
 
 .. math::
-    o ::= [] | byte,o
+    o ::= [] | expr,o
 
-where :math:`base` and :math:`size` determine the range of the memory and :math:`byte` is a container of one-byte memory either being concrete or symbolic.
+where :math:`BASE` and :math:`SIZE` determine the range of the memory and :math:`expr` is an one-byte-long expression.
 
 The globals
 
@@ -74,10 +74,10 @@ where :math:`\sigma` is a stack frame and is defined as
 .. math::
     \sigma ::= \langle pc, \Delta, \alpha \rangle
 
-:math:`pc` is the program counter. :math:`\Delta` stands for the locals of the current function and is a map from the local identifiers to its value, i.e.
+:math:`pc` is the program counter. :math:`\Delta` stands for the locals of the current function and is a map from the local identifiers to their values represented by expressions, i.e.
 
 .. math::
-    \Delta ::= id \mapsto V
+    \Delta ::= id \mapsto expr
 
 :math:`\alpha` is a list of allocated local memory blocks using *alloca*:
 
@@ -188,14 +188,16 @@ Memory Access and Addressing Operations
 It is assured that the size of <type> is fixed. When <NumElements> is not symbolic, the updated state :math:`S'` is defined as
 
 .. math::
-    Alloca
     \frac{
     S = \langle M, G, \Sigma \rangle, \sigma = top(\Sigma) = \langle pc, \Delta, \alpha \rangle
     }{
     S' = \langle M[m \mapsto init(m)], G, \Sigma \oplus \sigma' \rangle,
-    \sigma' = \langle pc_{next}, \Delta[\hat{r} \mapsto m_{addr}], \alpha + m \rangle,
+    \sigma' = \langle pc_{next}, \Delta[\hat{r} \mapsto m_{ADDR}], \alpha + m \rangle,
     m = alloc(\hat{t} \times \hat{N})
     }
+    Alloca
+
+where :math:`\hat{t}` is the size of <ty>, :math:`\hat{N}` is <NumElements> and :math:`\hat{r}` is <result>.
 
 TODO: How if <NumElements> is symbolic?
 
