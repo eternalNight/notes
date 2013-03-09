@@ -1,0 +1,113 @@
+* The Google File System					:Distributed:
+** Motivations
+*** Fault tolerance - Servers often fail
+    What kind of fault? (server not responding? Respond in an abnormal manner?)
+    How to detect? (Master-slave structure?)
+    Metadata management?
+    How to recover data when a server crashes?
+    Workload balancing?
+*** Big file - Files are almost big in size but small files still exist
+    Block size on storage can be bigger (simplify metadata management)
+    Block size of cache in memory? Can it work well when memory is fragmented?
+*** Almost-immutable data - Files are read sequentially and mutated by appending
+    Concurrent access to a single file can be easier (append as a transaction)
+*** Co-design of applications and FS API
+    Applications can be based on sequential reads and append. They can manage random reads themselves.
+** Interface
+   create, delete, open, close, read
+*** write (to a single chunk)
+    Requests to write multiple chunks will be broken down by the client library, making the operation not atomic.
+*** snapshot - Create a copy of file/directory (optimized "read + write" schema?)
+    Copy on write
+    First copy metadata on the master. Copy the chunk when client requests to write on it.
+    (How about application checkpoints?)
+*** record append - Concurrently append to a file (may insert multiple copies or paddings)
+    Atomic
+    Maximum size of a single request = 1/4 chunk size
+    Simply append to the end of the chunk data if the space is enough. Padding the chunk and asking the client to retry on the next chunk if not.
+** Architecture
+   One master, multiple chunkservers and client library for applications
+   Fault detection - Periodic heartbeat messages between master and chunkservers
+   Metadata - maintained by master
+   Client library - Ask master for locations and request data from the chunkserver
+*** Chunk size
+    One chunk as a plain Linux file, size = 64MB
+    Avoid fragmentation - ?
+    Advantages
+    - Reduce client requests for metadata
+    - Keep persistent TCP connection to the chunkserver
+    - Reduce metadata size so that it can be put in memory
+    Disadvantages
+    - Not efficient for small files (the chunkserver may be a hot spot)
+      Leverage read requests among serverl replicas?
+      Regard clients with the data as temporary servers?
+*** Metadata
+    Metadata include
+    - Namespace - Persistent structure in memory (checkpoints) + logging
+    - File->chunk mapping - Persistent structure in memory (checkpoints) + logging
+    - chunk->chunkserver mapping - collected from chunkservers at startup and periodically thereafter
+      => Simplify handling chunkserver state changes (do not need to find where is it after it fails, restarts or changes hostname)
+    Operations logs have several hot backups.
+**** Namespace
+     Namespace is a map from filepath to the file metadata (file->chunk mapping). Each node (file or directory) has a read-write lock.
+     file read-lock: read
+     file write-lock: write append delete snapshot(src & dst)
+     dir read-lock: read(files in it)
+     dir write-lock: delete snapshot(src & dst)
+*** Consistency Model
+    Namespace mutation are atomic
+    Regions of a file may be
+    - defined: all replicas are the same and mutations are presented entirely (even it crosses chunk boundary)
+    - consistent: all replicas are the same
+    - inconsistent: replicas have different data
+    Replicas may not bytewise identical
+*** Data flow
+    Decouple control flow and data flow
+    To-be-update data are pushed to all replicas in a pipelined manner.
+*** Garbage Collection
+    Garbages: Chunks of deleted files, orphaned chunks (not belong to any file), stale chunks (detected by version number)
+    Source of orphaned chunks:
+    - Partially failed file creation
+    - Losted replica deletion message
+    Lazily reclaimed in regular background activity.
+    Advantage:
+    - A simple mechanism for reclaiming all kinds of useless chunks
+      Useless chunks may emerge for different reasons. W/o a uniformed mechanism, this could be complicated.
+    - Only carry out GC when system is relatively free
+    Disadtange:
+    - Not easy to tune storage usage when it is almost full
+*** Replication
+**** Replica placement
+     Across racks for higher reliability (introduce overhead to writes)
+*** Fault tolerance
+**** Availability
+     System recovery in seconds
+     Chunk Replication
+     Master backup
+**** Data Integrity
+     Chunk checksum (32 bit for 64KB block). Checksums are logged.
+* Dynamo: Amazon's Highly Avaiable Key-value Store		:Distributed:
+** Motivations as an e-commerce platforms
+*** Require: Extremely high reliability
+    It should be impossible for data to loss
+*** Require: High scalability
+    Customer requirements are growing continuously
+*** Require: High availability
+    Operations (i.e. service state mutation) should never fail
+*** Access pattern: primary-key access
+    Many services need primary-key access ONLY
+    The values are relatively small (less than 1MB)
+* Bigtable: A Distributed Storage System for Structured Data 	:Distributed:
+** Motivations
+*** Petabytes of structured data
+** Data Model
+   (row:string, column:string, time:int64) -> string
+   Access to a single row (no matter how many columns) is atomic
+** Data Management
+   - Row Unit: Dynamically partitioned range of rows in lexicographic order (rowrange)
+     Rowranges are the unit for load balancing
+     Adtantange - Properly selected keys benefit from locality
+   - Column Unit: Column Family created by applications
+   - Timestamp
+     A version stamp for multiple versions of data in the same cell
+
