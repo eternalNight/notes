@@ -99,10 +99,13 @@
     The values are relatively small (less than 1MB)
 * Bigtable: A Distributed Storage System for Structured Data 	:Distributed:
 ** Motivations
-*** Petabytes of structured data
+*** Petabytes of structured data (in table)
+** Dependency
+   GFS, Chubby, SSTable File Format(internal)
 ** Data Model
    (row:string, column:string, time:int64) -> string
    Access to a single row (no matter how many columns) is atomic
+   Data *immutable*
 ** Data Management
    - Row Unit: Dynamically partitioned range of rows in lexicographic order (rowrange)
      Rowranges are the unit for load balancing
@@ -110,4 +113,70 @@
    - Column Unit: Column Family created by applications
    - Timestamp
      A version stamp for multiple versions of data in the same cell
-
+** Components
+   A single master
+   - Maintaining metadata
+     - Tablet -> tablet server
+   - Handling changes to table schema
+   Multiple tablet servers
+   - Handling access to tablets; split tablets when needed
+   Client library
+*** Single tablet storage
+    memtable (tablet in memory) + commit log (in GFS) + multiple SSTables (in GFS)
+**** Table writes
+     1. Add to memtable
+     2. If memtable is big enough, create a new memtable for future mutations and save the original one as a SSTable
+     3. Regular tablet compactions to reduce number to SSTables (remove deleted entries and legacy old values, etc.)
+*** Locating a tablet
+    Metadata
+    - A 3-level-page-table-like structure stored in Bigtable itself (one METADATA table for each table stored?)
+    - A file in Chubby server as CR3
+    - Access optimizations to avoid being a bottleneck
+      - Recursively moves up instead of relocating when cached location is incorrect
+      - Prefetching continuous locations for future use (*locality*)
+    ? What should be done when a METADATA tablet should be moved?
+*** Failure tolerance
+    - Master monitors Chubby files locked by each tablet server
+      - Use heartbeat to ask for lock status. A server fails when it lost the lock or does not respond
+      - When a tablet server fails, the master acquires its lock, remove the file (so that the server is killed)
+	and reassign its tablets
+    - Master kills itself and restarts when its Chubby session expires (will not affect tablet assignment)
+      - When a master starts, it has to detect tablet assignment before carrying out any management
+	1. acquires a /master/ lock on Chubby (avoid multiple masters)
+	2. scans available servers by iterating a Chubby directory
+        3. asks each server for assigned tablets
+	4. scans METADATA table for the whole set of tablets
+    - Tablet recovery
+      - Read SSTable, find a checkpoint (in log) from METADATA table and replay the mutations
+      ? How to recover a METADATA tablet (checkpoint of level-n tablet is stored in level-(n-1), and level-1 tablet in Chubby file?)
+** Refinement details
+*** Explicit column locality
+*** Compression controlled by clients
+*** Server-side caching (the key-value pairs returned to clients + tablet cache)
+*** Client-speficied BLOOM filters (for checking is a SSTable might have the required data) to get rid of useless disk seeks
+*** One log per server instead of per tablet
+*** Benefits from SSTable immutability
+    - Simple SSTable cache
+    - No sync when reading SSTables
+    - GC to remove obsolete SSTables
+    - No copy when spliting
+* Virtual WiFi: Bring Virtualization from Wired to Wireless 	 :MobileVirt:
+** Background
+   'Client virtualization'
+   driving by enterprise IT
+** Motivations
+*** Virtualization technology for wired network are not suitable for wireless network
+    - Wireless interface has more to do than just transfering data
+      - Sophisticated userspace tools managing multi-radio access
+      - Certification per connection
+	The existing solution provide access to the same network to all VMs
+** Challenges
+* The VMware Mobile Virtualization Platform 			 :MobileVirt:
+** Motivations
+*** Provide high manageability for IT on personal device
+** Challenges
+*** Handling device / platform virtualization
+* The OKL4 Microvisor 						 :MobileVirt:
+* Virtual smartphone over IP 					 :MobileVirt:
+** Motivation
+*** Extended computation resources for smartphones on the cloud
