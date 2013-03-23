@@ -160,6 +160,63 @@
     - No sync when reading SSTables
     - GC to remove obsolete SSTables
     - No copy when spliting
+* Memory Coherence in Shared Virtual Memory Systems 		:Distributed:
+** Motivations
+*** Provide a unified memory model for userspace programs
+    Mapping physical memory on different nodes to a single virtual memory space
+    SMP-like parallel programming paradigm
+    ? If this is possible, why message passing is still the dominant?
+*** Problem: coherence (caching should exist)
+** Granularity
+   Bigger granularity
+   - Pros
+     - Less overhead in protocol stack
+     - Less page faults if the unit size is no less than a page
+   - Cons
+     - More chance of contention (multiple writes to a single unit)
+     - More change of useless data caching
+   ? Should there be an 'invalidate' message to all nodes when a write occurs?
+** Strategy
+*** Difference w/ cache coherence problem
+    For cache
+    - There exists the globally shared memory where all data are placed
+    For virtual shared memory
+    - No such globally shared storage exists => Ownership strategy
+*** Writeback & Invalidation
+    writeback - Push the data to all page copies => expensive
+    invalidation - Mark other copies as invalidated
+*** Ownership
+    predefined - Not good if a non-owner node writes to the page frequently
+    dynamic w/ a central manager - 
+    dynamic w/o central manager (distributed)
+** Algorithms proposed
+*** Centrualized
+**** Data structure (v1)
+     In the manager, an entry for each page <owner, copy_set, lock> (the /info/ table)
+     - owner: who(a processor) has write access
+     - copy_set: all processors having cached the page (to avoid broadcast but can it be a scalability issue?)
+     - lock: 
+     Each processor has a /ptable/ table whose entries look like <access, lock> (can it be very large if there're many nodes?)
+     - access: its access to the page
+     - lock:
+**** Messages
+     Usage of confirmation messages: the manager needs to know the page transfer has completed so that new requests on the same page can be carried out.
+**** Data structure (v2)
+     /info/ of the manager <owner> + global lock:
+     - owner: the same with v1
+     - A global lock 
+     /ptable/ of each processor: <access, copy_set, lock>
+     - access: the same
+     - copy_set: Only valid the the processor has write access
+     - lock
+*** Distributed
+**** Statically distributed
+**** Dynamically distributed based on broadcast data structure
+     /ptable/ of each processor: <access, copy_set, lock, owner>
+     - owner: Owner of the page
+**** Dynamically distributed (v2)
+     /ptable/ of each processor: <access, copy_set, lock, prob_owner>
+     - prob_owner: Possible owner of the page (maybe out-dated)
 * Virtual WiFi: Bring Virtualization from Wired to Wireless 	 :MobileVirt:
 ** Background
    'Client virtualization'
