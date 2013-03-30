@@ -217,6 +217,43 @@
 **** Dynamically distributed (v2)
      /ptable/ of each processor: <access, copy_set, lock, prob_owner>
      - prob_owner: Possible owner of the page (maybe out-dated)
+* Maintaining the Time in a Distributed System 			:Distributed:
+** Time service
+   1. Made up of several time servers
+   2. The client sends request to *an arbitrary subset* of time servers and uses the *first* reply
+   3. No need to consider connection reliability or authentication
+** Requirements of a time service
+   - Monotonic
+   - Synchronized among time servers
+   - (Absolute or relative) accuracy
+   Note: It depends on use cases
+** Model
+   Assume that, at time /t/, the clock of each time server is C_i(t). The synchronization is done by picking a function F so that:
+   C_i(t) <- F(C_i1(t), C_i2(t), ..., C_in(t))
+   This paper assumes the distributed data (clocks on each server) is collected by broadcasting and focuses on the selection of F.
+   Existing F: maximum, median, mean
+*** Properties of a clock
+    - Perfect: for all t, C(t) = t
+    - Correct at t0: C(t0) = t0
+    - Accurate at t0: C'(t0) = 1
+    - Stable: C''(t0) = 0
+* A Survey of Virtualization on Mobiles 			 :MobileVirt:
+** Mobile paravirtualization for running two OS in parallel
+   L4 Fiasco (Nokia Research Center)
+   OKL4 (OK Labs)
+   MobiVMM (Korea Univ. & Microsoft Research Asia)
+** Phone virtualization
+   Virtualization on desk phones, based on OKL4 (Avaya Labs)
+** Porting existing hypervisors to ARM
+   Xen(PV)
+   KVM (Columbia Univ.)
+** Processor virtualization architecture
+   VIRTUS
+** Mobile cloud computing
+   Uploading services such as mail, maps, anti-virus to the cloud
+** Other use cases
+   Chameleon - Smart phones as guests to host devices (like TV and monitors)
+   VStore - Storage sharing and protection
 * Virtual WiFi: Bring Virtualization from Wired to Wireless 	 :MobileVirt:
 ** Background
    'Client virtualization'
@@ -237,3 +274,26 @@
 * Virtual smartphone over IP 					 :MobileVirt:
 ** Motivation
 *** Extended computation resources for smartphones on the cloud
+* On Multicore Scalability and Commutativity 			  :MultiCore:
+** Commutability
+   Changing order of two operations:
+   - doesn't affect their results
+   - doesn't make execution order distinguiable
+   Recall memory sequential cohenrency
+   Not sure about the proof. Seems 'correctness' is determined by responses while internal states are not in consideration.
+   Anyway, the rule itself provides insight.
+** Components
+*** ANALYZER
+    Interface analysis based on a simplified prototype.
+    Is it possible that commutativity is implied in the representation given, instead of the interface itself?
+    If so, it may be more useful to check existing interface implementations (maybe for lessons?)
+*** TESTGEN
+    Coverage of the prototype.
+*** MTRACE
+** Misc
+   GC gives a chance for better scalability? (section 6.2 *Defer work*)
+** Evaluation
+   How much percentage of FS operations in real time applications can enjoy the scalability mentioned here?
+** Possible works
+   Redesign uCore interface (e.g. HAL) concerning scalability?
+   Representations of API: do we have to use an implementation-like prototype?
