@@ -297,3 +297,27 @@
 ** Possible works
    Redesign uCore interface (e.g. HAL) concerning scalability?
    Representations of API: do we have to use an implementation-like prototype?
+* The Byzantine Generals Problem 					 :FT:
+** Problem
+   A failed component may send conflicting information to different parts of the system
+* Byzantine Fault Tolerance, from Theory to Reality 			 :FT:
+** Background
+   IC enjoys increasing wide deployment but suffers from decreasing expected lifttime (5~10 y)
+** The original problem
+   Multiple generals have to communicate and come to an agreement on a plan of action,
+   while some of them may be traitors.
+*** Axioms on messages
+    A1 Messages are not lost
+    A2 The receiver knows who send it
+    A3 Absence of a message can be detected
+    A4 Royal generals have unforgable signatures
+    A5 Anyone can verify signature authenticity
+**** Oral messages (w/ A1,A2,A3)
+     To tolerate m traitors, requires 3m+1 generals using m+1 rounds of information exchange
+**** Written messages (w/ all)
+     To tolerate m traitors, requires 2m+1 generals using m+1 rounds of information exchange
+** Definitions
+   Byzantine fault: a fault presenting different symptoms to different observers
+   Byzantine failure: loss of a system service due to a Byzantine fault
+   Without system-level agreement, Byzantine faults will not result in Byzantine failures.
+* Practical Byzantine Fault Tolerance 					 :FT:
