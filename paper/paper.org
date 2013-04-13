@@ -237,6 +237,16 @@
     - Correct at t0: C(t0) = t0
     - Accurate at t0: C'(t0) = 1
     - Stable: C''(t0) = 0
+* Time, Clocks, and the Ordering of Events in a Distributed System :Distributed:
+** Define a total order of events
+*** The partial ordering - "happen before"
+    operation a "happen before" b if one of the following holds
+    1. a and b are in the same thread and a executes before b
+    2. a is sending a message and b is the corresponding message receiving
+    3. there exists another operation c so that a "happen before" c and c "happen before" b
+*** The total ordering
+    Simply keep "happen before" order and arrange the remainings in an arbitrary manner
+** Use case - Mutual exclusion
 * A Survey of Virtualization on Mobiles 			 :MobileVirt:
 ** Mobile paravirtualization for running two OS in parallel
    L4 Fiasco (Nokia Research Center)
@@ -297,6 +307,29 @@
 ** Possible works
    Redesign uCore interface (e.g. HAL) concerning scalability?
    Representations of API: do we have to use an implementation-like prototype?
+* RadixVM 							  :MultiCore:
+** Challenges
+*** complex invariants (details?)
+    e.g.
+    1. remove access permission after unmapping (involves page table & TLB)
+*** do not flood TLB shootdown IPI
+*** avoid cacheline-level contention
+** RefCache
+*** Target access schema
+    Allow lazy GC
+    With locality (a specific entry will be modified mostly by only one core)
+*** Compared w/ Oplog
+    Operation w/ commutativity: p, p^-1
+        (lambda (x) (p^-1 (p x))) = (lambda (x) x), may be different from (lambda (p (p^1 x)))
+	so that batching enjoys benefits as p and p^-1 can be both eliminated when they appear at the same time
+	p_1 and p_2 may or may not be possible to be merged (e.g. inc/dec can while add/remove vma cannot in most cases)
+        e.g. add/remove vma; inc/dec counter
+    Operation requiring sync: s
+	in oplog: triggered by user, cannot be delayed (i.e. no commutativity)
+	          only sync when s is performed
+	in refcache: triggered by kernel (according to the operation sequence), can be delayed (i.e. w/ commutativity)
+	             need fixed/selfadaptive timer
+        e.g. remove all vma mapped to a specific cached page; free object
 * The Byzantine Generals Problem 					 :FT:
 ** Problem
    A failed component may send conflicting information to different parts of the system
